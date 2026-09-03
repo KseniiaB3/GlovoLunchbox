@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glovo Lunchbox — Mobile Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --yellow:#FFC244; --yellow-deep:#F2AF1E; --yellow-tint:#FFF4D9;
+  --text:#121212; --text-2:#6E6E73; --text-3:#9A9AA0;
+  --bg:#FFFFFF; --surface:#F6F6F7; --border:#ECECEE;
+  --green:#00A082; --green-tint:#E4F5F1; --coral:#E8452C;
+  --shadow:0 4px 16px rgba(0,0,0,.06); --shadow-md:0 8px 24px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;background:#EDEDF0;color:var(--text);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 56px;-webkit-font-smoothing:antialiased}
+
+/* presenter strip */
+.presenter{width:100%;max-width:560px;text-align:center;margin-bottom:22px}
+.presenter .kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);font-weight:600;margin-bottom:8px}
+.presenter h1{font-size:20px;font-weight:800;margin:0 0 4px;letter-spacing:-.02em}
+.presenter p{margin:0 0 16px;font-size:13px;color:var(--text-2)}
+.navstrip{display:flex;gap:6px;background:#fff;padding:6px;border-radius:999px;box-shadow:var(--shadow);justify-content:center;flex-wrap:wrap}
+.navstrip button{font-family:inherit;font-size:12.5px;font-weight:600;color:var(--text-2);background:transparent;border:0;padding:9px 15px;border-radius:999px;cursor:pointer;transition:.18s;white-space:nowrap}
+.navstrip button:hover{background:var(--surface);color:var(--text)}
+.navstrip button.active{background:var(--yellow);color:var(--text);box-shadow:0 2px 8px rgba(242,175,30,.4)}
+
+/* phone frame */
+.phone{width:390px;height:844px;background:var(--bg);border-radius:46px;position:relative;overflow:hidden;
+  box-shadow:0 0 0 11px #1b1b1e,0 0 0 13px #313136,0 30px 70px rgba(0,0,0,.35);flex:none}
+.notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:120px;height:31px;background:#1b1b1e;border-radius:999px;z-index:60}
+.statusbar{position:absolute;top:0;left:0;right:0;height:52px;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:14px 30px 0;font-size:13.5px;font-weight:600;pointer-events:none}
+.statusbar .icons{display:flex;align-items:center;gap:5px}
+.bars{display:flex;align-items:flex-end;gap:2px;height:11px}
+.bars i{width:3px;background:var(--text);border-radius:1px;display:block}
+.bars i:nth-child(1){height:4px}.bars i:nth-child(2){height:6px}
+.bars i:nth-child(3){height:8.5px}.bars i:nth-child(4){height:11px}
+.batt{width:23px;height:11.5px;border:1.4px solid var(--text);border-radius:3.5px;position:relative;opacity:.9}
+.batt::after{content:"";position:absolute;right:-3.5px;top:3.4px;width:2px;height:4.5px;background:var(--text);border-radius:0 1px 1px 0}
+.batt i{position:absolute;inset:1.5px;width:72%;background:var(--text);border-radius:1.8px;display:block}
+
+.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding-top:52px;padding-bottom:96px;display:none;scrollbar-width:none}
+.screen::-webkit-scrollbar{display:none}
+.screen.active{display:block;animation:fade .28s ease}
+keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* shared */
+.pad{padding:0 18px}
+.pill-btn{display:block;width:100%;border:0;font-family:inherit;cursor:pointer;background:var(--yellow);color:var(--text);
+  font-weight:700;font-size:15.5px;padding:16px;border-radius:999px;box-shadow:0 6px 18px rgba(242,175,30,.38);transition:transform .12s}
+.pill-btn:active{transform:scale(.975)}
+.pill-btn.ghost{background:#fff;box-shadow:none;border:1.5px solid var(--border);color:var(--text-2);font-size:14px;padding:13px}
+.sec-title{font-size:17px;font-weight:800;letter-spacing:-.02em;margin:0 0 12px}
+.badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:4px 8px;border-radius:6px}
+.badge.new{background:var(--coral);color:#fff}
+.badge.green{background:var(--green-tint);color:var(--green)}
+.badge.yellow{background:var(--yellow-tint);color:#8A6300}
+.badge.grey{background:var(--surface);color:var(--text-2)}
+.back{width:36px;height:36px;border-radius:50%;background:var(--surface);display:grid;place-items:center;cursor:pointer;font-size:15px;flex:none;border:1px solid var(--border)}
+
+/* SCREEN 1 */
+.addr{display:flex;align-items:center;justify-content:space-between;padding:8px 18px 12px}
+.addr .label{font-size:10.5px;color:var(--text-3);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.addr .street{font-size:15px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:5px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--yellow);display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+.searchbar{margin:0 18px 18px;height:46px;background:var(--surface);border-radius:14px;display:flex;align-items:center;gap:9px;padding:0 14px;color:var(--text-3);font-size:14.5px;border:1px solid var(--border)}
+.bubbles{display:flex;gap:14px;padding:2px 18px 20px;overflow-x:auto;scrollbar-width:none}
+.bubbles::-webkit-scrollbar{display:none}
+.bubble{width:66px;flex:none;text-align:center;cursor:pointer}
+.bubble .circle{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;font-size:29px;position:relative;box-shadow:var(--shadow);background:var(--surface);transition:transform .15s}
+.bubble:active .circle{transform:scale(.94)}
+.bubble .cap{font-size:11.5px;font-weight:600;margin-top:8px;line-height:1.25}
+.bubble .tag{position:absolute;top:-4px;right:-6px;background:var(--coral);color:#fff;font-size:8.5px;font-weight:800;padding:3px 6px;border-radius:6px;box-shadow:0 2px 6px rgba(232,69,44,.4)}
+.bubble.feature .circle{background:linear-gradient(145deg,#FFD87A,#FFC244);box-shadow:0 6px 16px rgba(242,175,30,.45);outline:2.5px solid #fff;outline-offset:-2.5px}
+.bubble.feature .cap{font-weight:800}
+
+.banner{margin:0 18px;border-radius:24px;padding:20px;position:relative;overflow:hidden;cursor:pointer;box-shadow:var(--shadow-md);
+  background:linear-gradient(135deg,#FFDD8E 0%,#FFC244 100%)}
+.banner .art{position:absolute;right:-10px;bottom:-16px;font-size:92px;opacity:.95;line-height:1;transform:rotate(-8deg)}
+.banner .inner{position:relative;z-index:2;max-width:238px}
+.banner h3{margin:8px 0 6px;font-size:20px;line-height:1.18;font-weight:800;letter-spacing:-.025em}
+.banner p{margin:0 0 14px;font-size:12.5px;line-height:1.45;color:#4A4A4E;font-weight:500}
+.banner .cta{display:inline-flex;align-items:center;gap:6px;background:var(--text);color:#fff;font-size:12.5px;font-weight:700;padding:10px 16px;border-radius:999px}
+.kitchen-strip{display:flex;align-items:center;gap:8px;margin:14px 18px 0}
+.kitchen-strip .faces{display:flex}
+.kitchen-strip .faces span{width:28px;height:28px;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;font-size:13px;margin-left:-9px;background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.kitchen-strip .faces span:first-child{margin-left:0}
+.kitchen-strip .txt{font-size:11.5px;font-weight:600;color:var(--text-2);line-height:1.35}
+
+.how{padding:0 18px}
+.how .card{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:14px;margin-bottom:9px}
+.how .num{width:26px;height:26px;border-radius:50%;background:var(--yellow);display:grid;place-items:center;font-weight:800;font-size:12px;flex:none}
+.how h4{margin:0 0 3px;font-size:14px;font-weight:800;letter-spacing:-.02em}
+.how p{margin:0;font-size:12px;line-height:1.45;color:var(--text-2)}
+
+.mini-row{display:flex;gap:12px;padding:0 18px;overflow-x:auto;scrollbar-width:none}
+.mini-row::-webkit-scrollbar{display:none}
+.mini{width:150px;flex:none}
+.mini .ph{height:88px;border-radius:16px;display:grid;place-items:center;font-size:34px;box-shadow:var(--shadow)}
+.mini .nm{font-size:13px;font-weight:700;margin-top:8px}
+.mini .mt{font-size:11.5px;color:var(--text-2);margin-top:2px}
+
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:84px;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-top:1px solid var(--border);z-index:40;display:flex;align-items:flex-start;padding:11px 8px 0}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--text-3);font-size:10.5px;font-weight:600;cursor:pointer}
+.tab svg{width:23px;height:23px;stroke-width:1.9}
+.tab.on{color:var(--text)}
+.tab.on svg{stroke-width:2.3}
+.homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;background:var(--text);opacity:.85;border-radius:999px;z-index:70;pointer-events:none}
+
+/* SCREEN 2 — restaurants */
+.rhead{display:flex;align-items:center;gap:12px;padding:6px 18px 14px}
+.rhead .t{font-size:20px;font-weight:800;letter-spacing:-.025em}
+.banner .offer{display:inline-flex;align-items:center;gap:6px;background:var(--coral);color:#fff;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:6px 11px;border-radius:8px;box-shadow:0 4px 14px rgba(232,69,44,.45)}
+.banner .offer b{font-size:14px;letter-spacing:-.01em}
+.tier .price .old{font-size:15px;font-weight:700;color:var(--text-3);text-decoration:line-through}
+.tier .firstwk{font-size:11.5px;font-weight:800;color:var(--coral);margin:-4px 0 10px;letter-spacing:-.01em}
+.promo-strip{margin:0 18px 14px;background:var(--coral);color:#fff;border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 18px rgba(232,69,44,.35)}
+.promo-strip .big{font-size:20px;font-weight:800;letter-spacing:-.03em;flex:none}
+.promo-strip .tx{font-size:11.5px;font-weight:600;line-height:1.4}
+.calc .r.promo{color:var(--coral)}
+.calc .r.promo b{color:var(--coral);font-size:15px}
+.banner .price-line{display:flex;align-items:baseline;gap:7px;margin:0 0 12px}
+.banner .price-line .a{font-size:26px;font-weight:800;letter-spacing:-.035em;line-height:1}
+.banner .price-line .old{font-size:14px;font-weight:700;color:#8A6300;text-decoration:line-through}
+.banner .price-line .u{font-size:12px;font-weight:600;color:#4A4A4E}
+.rlist{padding:0 18px}
+.rrow{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.rrow .ph{width:72px;height:72px;border-radius:18px;display:grid;place-items:center;font-size:30px;flex:none;position:relative}
+.rrow .ph .lb{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);background:var(--yellow);font-size:8.5px;font-weight:800;padding:3px 7px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.rrow .nm{font-size:15px;font-weight:800;letter-spacing:-.02em}
+.rrow .mt{font-size:12px;color:var(--text-2);margin-top:3px}
+.rrow .tags{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.rrow .fee{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--green);flex:none}
+/* SCREEN 2 */
+.qhead{padding:6px 18px 0;display:flex;align-items:center;gap:12px}
+.progress{flex:1;height:6px;background:var(--surface);border-radius:999px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--yellow);border-radius:999px;transition:width .3s cubic-bezier(.4,0,.2,1)}
+.qstep{font-size:11.5px;font-weight:700;color:var(--text-3);flex:none}
+.dots{display:flex;gap:5px;justify-content:center;padding:14px 0 2px}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--border);transition:.25s}
+.dots i.on{background:var(--yellow);width:18px;border-radius:999px}
+.qwrap{padding:12px 18px 0}
+.q{display:none}
+.q.active{display:block;animation:fade .25s ease}
+.q .eyebrow{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--yellow-deep)}
+.q h2{font-size:25px;font-weight:800;letter-spacing:-.03em;line-height:1.2;margin:8px 0 6px}
+.q .sub{font-size:13px;color:var(--text-2);margin:0 0 20px;line-height:1.45}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;align-items:center;gap:13px;padding:15px 16px;border-radius:18px;background:#fff;border:1.5px solid var(--border);cursor:pointer;transition:.16s}
+.opt .ico{font-size:22px;width:26px;text-align:center;flex:none}
+.opt .txt{flex:1;min-width:0}
+.opt .t1{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.opt .t2{font-size:12px;color:var(--text-2);margin-top:2px}
+.opt .check{width:22px;height:22px;border-radius:50%;border:1.8px solid var(--border);flex:none;display:grid;place-items:center;font-size:12px;color:transparent;transition:.16s}
+.opt.sel{border-color:var(--yellow);background:var(--yellow-tint);box-shadow:0 4px 14px rgba(242,175,30,.22)}
+.opt.sel .check{background:var(--text);border-color:var(--text);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:9px}
+.chip{padding:11px 16px;border-radius:999px;background:#fff;border:1.5px solid var(--border);font-size:13.5px;font-weight:600;cursor:pointer;transition:.16s}
+.chip.sel{background:var(--yellow);border-color:var(--yellow);font-weight:700;box-shadow:0 4px 12px rgba(242,175,30,.3)}
+.qfoot{padding:26px 18px 10px}
+.qfoot .skip{text-align:center;font-size:12.5px;color:var(--text-3);font-weight:600;margin-top:14px;cursor:pointer}
+
+/* SCREEN 3 */
+.s3head{padding:8px 18px 0}
+.s3head .row{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.s3head h2{font-size:24px;font-weight:800;letter-spacing:-.03em;margin:0 0 6px;line-height:1.2}
+.s3head p{margin:0;font-size:13px;color:var(--text-2);line-height:1.45}
+
+.weekbar{margin:16px 0 0;padding:14px 18px 15px;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.weekbar .wtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.weekbar .wcount{font-size:13px;font-weight:800;letter-spacing:-.01em}
+.weekbar .wcount span{color:var(--text-2);font-weight:600}
+.autofill{font-family:inherit;border:1.5px solid var(--text);background:#fff;color:var(--text);font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:999px;cursor:pointer}
+.autofill:active{transform:scale(.96)}
+.days{display:flex;gap:9px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.days::-webkit-scrollbar{display:none}
+.day{width:58px;flex:none;text-align:center;cursor:pointer}
+.day .lbl{font-size:10.5px;font-weight:700;color:var(--text-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.day .slot{height:58px;border-radius:18px;background:#fff;border:2px dashed var(--border);display:grid;place-items:center;font-size:24px;color:var(--text-3);transition:.16s;position:relative;overflow:hidden}
+.day.filled .slot{border-style:solid;border-color:transparent;cursor:grab}
+.day.active .slot{border-color:var(--text);border-style:solid;box-shadow:0 0 0 3px rgba(255,194,68,.45)}
+.day.moving .slot{transform:translateY(-5px) scale(1.04);box-shadow:0 10px 20px rgba(0,0,0,.18),0 0 0 3px var(--yellow);border-color:var(--text);border-style:solid}
+.day.moving .lbl{color:var(--yellow-deep)}
+.day.drop-target .slot{border:2px dashed var(--yellow-deep);background:var(--yellow-tint)}
+.day .rest{font-size:9.5px;font-weight:600;color:var(--text-2);margin-top:5px;line-height:1.2;height:22px;overflow:hidden}
+.day .clear{position:absolute;top:2px;right:3px;font-size:9px;color:var(--text-2);background:rgba(255,255,255,.9);border-radius:50%;width:14px;height:14px;display:grid;place-items:center;font-weight:800}
+.day .grip{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:8px;color:rgba(0,0,0,.35);letter-spacing:2px;line-height:1}
+.movehint{display:none;align-items:center;gap:9px;margin-top:11px;background:var(--text);color:#fff;border-radius:14px;padding:10px 12px;font-size:11.5px;font-weight:600;line-height:1.35;animation:fade .2s ease}
+.movehint.on{display:flex}
+.movehint .x{margin-left:auto;flex:none;background:rgba(255,255,255,.16);border-radius:999px;padding:5px 10px;font-size:10.5px;font-weight:700;cursor:pointer}
+.movehint b{color:var(--yellow)}
+
+.winbox{margin:14px 18px 0;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:13px 14px}
+.winbox .t{font-size:12.5px;font-weight:800;margin-bottom:9px;display:flex;align-items:center;gap:6px}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.slotb{padding:9px 4px;border-radius:12px;background:#fff;border:1.5px solid var(--border);font-size:11.5px;font-weight:700;text-align:center;cursor:pointer;transition:.14s}
+.slotb.on{background:var(--yellow);border-color:var(--yellow)}
+.variety-note{display:flex;gap:10px;align-items:flex-start;margin:12px 18px 0;background:var(--green-tint);border-radius:16px;padding:12px 14px}
+.variety-note .ic{font-size:16px;line-height:1.1}
+.variety-note .tx{font-size:12px;line-height:1.5;color:#0A5E4E;font-weight:600}
+.variety-note b{color:var(--green);font-weight:800}
+
+.filters{display:flex;gap:8px;padding:16px 18px 4px;overflow-x:auto;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.fchip{flex:none;padding:8px 14px;border-radius:999px;background:#fff;border:1.5px solid var(--border);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.16s}
+.fchip.on{background:var(--text);border-color:var(--text);color:#fff;font-weight:700}
+.listhead{display:flex;align-items:baseline;justify-content:space-between;padding:18px 18px 10px}
+.listhead .t{font-size:16px;font-weight:800;letter-spacing:-.02em}
+.listhead .c{font-size:11.5px;font-weight:600;color:var(--text-3)}
+
+.mcard{margin:0 18px 12px;background:#fff;border-radius:22px;overflow:hidden;border:2px solid var(--border);box-shadow:var(--shadow);transition:.18s}
+.mcard.picked{border-color:var(--yellow);box-shadow:0 8px 22px rgba(242,175,30,.26)}
+.mcard .photo{height:104px;position:relative;display:grid;place-items:center;font-size:44px}
+.mcard .photo .float{position:absolute;top:10px;left:10px}
+.mcard .photo .rating{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.95);border-radius:8px;padding:4px 8px;font-size:11.5px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.mcard .body{padding:13px 14px 14px}
+.mcard .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.mcard h3{margin:0;font-size:15.5px;font-weight:800;letter-spacing:-.02em}
+.mcard .meal{font-size:12.5px;color:var(--text-2);margin-top:3px;font-weight:500}
+.addbtn{flex:none;font-family:inherit;border:0;cursor:pointer;background:var(--yellow);color:var(--text);font-size:12.5px;font-weight:800;padding:9px 14px;border-radius:999px;box-shadow:0 3px 10px rgba(242,175,30,.35);transition:.16s}
+.addbtn:active{transform:scale(.95)}
+.mcard.picked .addbtn{background:var(--text);color:#fff;box-shadow:none}
+.macros{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.mcard .foot{display:flex;align-items:center;gap:10px;margin-top:11px;padding-top:10px;border-top:1px solid var(--border);font-size:11.5px;color:var(--text-2);font-weight:600}
+.mcard .foot .dot{width:3px;height:3px;border-radius:50%;background:var(--text-3)}
+.mcard .assigned{font-size:11px;font-weight:800;color:var(--yellow-deep);margin-top:8px}
+.sticky-cta{position:absolute;left:0;right:0;bottom:0;padding:14px 18px 30px;z-index:45;background:linear-gradient(to top,#fff 68%,rgba(255,255,255,0));pointer-events:none}
+.sticky-cta .pill-btn{pointer-events:auto}
+
+/* SCREEN 4 */
+.eyebrow-s{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);font-weight:700;padding:0 18px 12px}
+.tier{margin:0 18px 12px;background:#fff;border:2px solid var(--border);border-radius:22px;padding:16px;cursor:pointer;transition:.18s;position:relative}
+.tier.sel{border-color:var(--yellow);background:var(--yellow-tint);box-shadow:0 8px 22px rgba(242,175,30,.25)}
+.tier .pop{position:absolute;top:-11px;left:16px;background:var(--text);color:#fff;font-size:9.5px;font-weight:800;padding:5px 11px;border-radius:999px;letter-spacing:.06em;text-transform:uppercase}
+.tier .nm{font-size:16px;font-weight:800;letter-spacing:-.02em}
+.tier .price{display:flex;align-items:baseline;gap:6px;margin:8px 0 10px}
+.tier .price .a{font-size:34px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.tier .price .u{font-size:13px;font-weight:600;color:var(--text-2)}
+.tier .desc{font-size:13px;line-height:1.5;color:var(--text-2)}
+.tier .list{margin-top:12px;padding-top:11px;border-top:1px dashed var(--border);display:flex;flex-direction:column;gap:7px}
+.tier .list div{font-size:11.5px;font-weight:600;color:var(--text-2);display:flex;gap:7px;align-items:flex-start}
+.tier .list div .ok{color:var(--green);font-weight:800;flex:none}
+.daysel{display:flex;gap:8px;padding:6px 18px 14px}
+.daysel div{flex:1;padding:11px 4px;border-radius:14px;background:#fff;border:1.5px solid var(--border);text-align:center;font-size:13px;font-weight:700;cursor:pointer;transition:.14s}
+.daysel div.on{background:var(--yellow);border-color:var(--yellow)}
+.calc{margin:0 18px 12px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:16px}
+.calc .r{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--text-2);padding:6px 0}
+.calc .r b{color:var(--text);font-weight:700}
+.calc .r.free b{color:var(--green)}
+.calc .r.total{border-top:1px solid var(--border);margin-top:7px;padding-top:12px;font-size:15px;color:var(--text);font-weight:800}
+.calc .r.total b{font-size:20px;letter-spacing:-.03em}
+.recap{margin:0 18px 12px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:15px}
+.recap .rhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.recap .rhead .t{font-size:14px;font-weight:800}
+.wk-row{display:flex;align-items:center;gap:11px;padding:8px 0;border-top:1px solid var(--border)}
+.wk-row .d{font-size:10.5px;font-weight:800;color:var(--text-3);width:28px;flex:none;letter-spacing:.05em}
+.wk-row .ph{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-size:18px;flex:none}
+.wk-row .nm{font-size:13px;font-weight:700}
+.wk-row .ml{font-size:11.5px;color:var(--text-2);margin-top:1px}
+.wk-row .kc{margin-left:auto;font-size:11px;font-weight:700;color:var(--text-2)}
+.recap .rfoot{display:flex;gap:7px;margin-top:11px;padding-top:11px;border-top:1px solid var(--border);flex-wrap:wrap}
+.compare{margin:0 18px 14px;background:var(--green-tint);border-radius:18px;padding:14px 15px;display:flex;gap:11px;align-items:flex-start}
+.compare .ic{font-size:18px;line-height:1.1}
+.compare .tx{font-size:12.5px;line-height:1.5;color:#0A5E4E;font-weight:600}
+.compare b{color:var(--green);font-weight:800}
+.smallprint{font-size:11px;line-height:1.55;color:var(--text-3);text-align:center;padding:12px 26px 0;font-weight:500}
+.trust{display:flex;justify-content:center;gap:14px;padding:14px 18px 4px;flex-wrap:wrap}
+.trust div{font-size:11px;font-weight:700;color:var(--text-2);display:flex;align-items:center;gap:5px}
+
+.caption{max-width:390px;margin:20px auto 0;text-align:center;font-size:12px;color:#6E6E73;line-height:1.6}
+.caption code{background:#fff;padding:2px 6px;border-radius:5px;font-size:11px;border:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<div class="presenter">
+  <div class="kicker">Glovo · New feature concept</div>
+  <h1>Glovo Lunchbox</h1>
+  <p>Your week of lunches, packed and planned — a different kitchen every day.</p>
+  <div class="navstrip">
+    <button data-go="1" class="active">1. Home</button>
+    <button data-go="2">2. Restaurants</button>
+    <button data-go="3">3. Quiz</button>
+    <button data-go="4">4. Week</button>
+    <button data-go="5">5. Pricing</button>
+  </div>
+</div>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="homebar"></div>
+  <div class="sticky-cta" id="weekCta" hidden>
+    <button class="pill-btn" id="s3cta" onclick="go(5)">Continue to plans</button>
+  </div>
+  <div class="statusbar">
+    <div>9:41</div>
+    <div class="icons">
+      <div class="bars"><i></i><i></i><i></i><i></i></div>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M8 10.2l1.8 1.8M1 4.2a10 10 0 0114 0M3.6 6.9a6.3 6.3 0 018.8 0" stroke="#121212" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="batt"><i></i></div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 1 ============ -->
+  <section class="screen active" id="screen1">
+    <div class="addr">
+      <div>
+        <div class="label">Deliver to</div>
+        <div class="street">14 Rynok Square <span style="font-size:10px">▼</span></div>
+      </div>
+      <div class="avatar">K</div>
+    </div>
+
+    <div class="searchbar">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6.2" stroke="#9A9AA0" stroke-width="1.9"/><path d="M13.6 13.6L17.5 17.5" stroke="#9A9AA0" stroke-width="1.9" stroke-linecap="round"/></svg>
+      Search for restaurants, stores…
+    </div>
+
+    <div class="bubbles">
+      <div class="bubble" onclick="go(2)"><div class="circle" style="background:#FFE9E4">🍔</div><div class="cap">Restaurants</div></div>
+      <div class="bubble"><div class="circle" style="background:#E4F5F1">🛒</div><div class="cap">Groceries</div></div>
+      <div class="bubble"><div class="circle" style="background:#FFF0F0">🍣</div><div class="cap">Sushi</div></div>
+      <div class="bubble"><div class="circle" style="background:#E8F0FF">💊</div><div class="cap">Pharmacy</div></div>
+      <div class="bubble"><div class="circle" style="background:#FDEDEA">💐</div><div class="cap">Flowers</div></div>
+      <div class="bubble"><div class="circle" style="background:#F1EBFF">📦</div><div class="cap">Courier</div></div>
+    </div>
+
+    <div class="pad" style="padding-top:4px;padding-bottom:12px"><div class="sec-title">Categories</div></div>
+    <div class="mini-row" style="padding-bottom:4px">
+      <div class="mini" onclick="go(2)"><div class="ph" style="background:linear-gradient(140deg,#FFE7D6,#F7C49B)">🍔</div><div class="nm">Burgers</div><div class="mt">86 places</div></div>
+      <div class="mini" onclick="go(2)"><div class="ph" style="background:linear-gradient(140deg,#E4F0FF,#B4D4F7)">🍣</div><div class="nm">Sushi</div><div class="mt">54 places</div></div>
+      <div class="mini" onclick="go(2)"><div class="ph" style="background:linear-gradient(140deg,#E6F0D9,#C4DFA1)">🥗</div><div class="nm">Healthy</div><div class="mt">61 places</div></div>
+    </div>
+
+    <div class="pad" style="padding-top:20px;padding-bottom:12px"><div class="sec-title">Popular near you</div></div>
+    <div class="mini-row">
+      <div class="mini"><div class="ph" style="background:linear-gradient(140deg,#FFE1B8,#FFC48C)">🍜</div><div class="nm">Wok &amp; Roll</div><div class="mt">4.7 ★ · 20–30 min</div></div>
+      <div class="mini"><div class="ph" style="background:linear-gradient(140deg,#D9F2E4,#A9E3C6)">🥙</div><div class="nm">Verde Bowl</div><div class="mt">4.8 ★ · 15–25 min</div></div>
+      <div class="mini"><div class="ph" style="background:linear-gradient(140deg,#FFD8D3,#FFB3A7)">🍕</div><div class="nm">Mama Napoli</div><div class="mt">4.5 ★ · 25–35 min</div></div>
+    </div>
+
+    <div class="pad" style="padding-top:24px">
+      <button class="pill-btn" onclick="go(2)">Next → Restaurants</button>
+    </div>
+
+    <div class="tabbar">
+      <div class="tab on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>Home</div>
+      <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg>Orders</div>
+      <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6.1L12 16.8 6.7 19.7l1.1-6.1L3.4 9.4l6-.8z"/></svg>Prime</div>
+      <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.2" r="3.8"/><path d="M4.6 20.5a7.6 7.6 0 0114.8 0"/></svg>Account</div>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 2 — Restaurants ============ -->
+  <section class="screen" id="screen2">
+    <div class="rhead">
+      <div class="back" onclick="go(1)">←</div>
+      <div class="t">Restaurants</div>
+    </div>
+
+    <div class="searchbar" style="margin-bottom:14px">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6.2" stroke="#9A9AA0" stroke-width="1.9"/><path d="M13.6 13.6L17.5 17.5" stroke="#9A9AA0" stroke-width="1.9" stroke-linecap="round"/></svg>
+      Search in restaurants
+    </div>
+
+    <div class="filters" style="padding:0 18px 16px">
+      <div class="fchip on">All</div>
+      <div class="fchip">Nearby</div>
+      <div class="fchip">Healthy</div>
+      <div class="fchip">Sushi</div>
+      <div class="fchip">Burgers</div>
+      <div class="fchip">Asian</div>
+    </div>
+
+    <div class="banner" onclick="go(3)">
+      <div class="art">🍱</div>
+      <div class="inner">
+        <span class="offer"><b>−35%</b> on your first week</span>
+        <h3>We bring lunch,<br>you save time &amp; money.</h3>
+        <div class="price-line"><div class="a">₴228</div><div class="old">₴350</div><div class="u">a day, first week</div></div>
+        <p style="margin-top:-6px">5 lunches from 5 different kitchens, delivered 12:00–15:00. Delivery included — no fee per order.</p>
+        <div class="cta">Build my Lunchbox
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M5 3l5 5-5 5" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="kitchen-strip">
+      <div class="faces"><span>🥙</span><span>🍗</span><span>🍜</span><span>🍱</span><span>🌯</span></div>
+      <div class="txt"><b>240+ kitchens</b> in Lviv are already on Lunchbox — ₴0 delivery on every one of them.</div>
+    </div>
+
+    <div class="pad" style="padding-top:26px;padding-bottom:12px"><div class="sec-title">All restaurants near you</div></div>
+    <div class="rlist">
+      <div class="rrow" onclick="go(3)">
+        <div class="ph" style="background:linear-gradient(140deg,#D9F2E4,#A9E3C6)">🥙<span class="lb">In Lunchbox</span></div>
+        <div><div class="nm">Verde Bowl</div><div class="mt">4.8 ★ · 15–25 min · Bowls</div>
+          <div class="tags"><span class="badge green">Healthy</span><span class="badge grey">₴₴</span></div></div>
+        <div class="fee">₴0</div>
+      </div>
+      <div class="rrow" onclick="go(3)">
+        <div class="ph" style="background:linear-gradient(140deg,#FFE1B8,#FFC48C)">🍗<span class="lb">In Lunchbox</span></div>
+        <div><div class="nm">Protein Lab</div><div class="mt">4.7 ★ · 20–30 min · Grills</div>
+          <div class="tags"><span class="badge grey">High-protein</span><span class="badge grey">₴₴</span></div></div>
+        <div class="fee">₴0</div>
+      </div>
+      <div class="rrow" onclick="go(3)">
+        <div class="ph" style="background:linear-gradient(140deg,#FFE9C9,#FFD08A)">🍜<span class="lb">In Lunchbox</span></div>
+        <div><div class="nm">Wok &amp; Roll</div><div class="mt">4.7 ★ · 20–30 min · Asian</div>
+          <div class="tags"><span class="badge grey">Ramen</span><span class="badge grey">₴₴</span></div></div>
+        <div class="fee">₴0</div>
+      </div>
+      <div class="rrow">
+        <div class="ph" style="background:linear-gradient(140deg,#FFD8D3,#FFB3A7)">🍕</div>
+        <div><div class="nm">Napoli 45</div><div class="mt">4.6 ★ · 25–35 min · Pizza</div>
+          <div class="tags"><span class="badge grey">Italian</span><span class="badge grey">₴₴</span></div></div>
+        <div class="fee" style="color:var(--text-2)">₴49</div>
+      </div>
+      <div class="rrow">
+        <div class="ph" style="background:linear-gradient(140deg,#E4F0FF,#B4D4F7)">🍣</div>
+        <div><div class="nm">Sakura Bento</div><div class="mt">4.6 ★ · 25–35 min · Sushi</div>
+          <div class="tags"><span class="badge grey">Japanese</span><span class="badge grey">₴₴₴</span></div></div>
+        <div class="fee" style="color:var(--text-2)">₴59</div>
+      </div>
+    </div>
+
+    <div class="pad" style="padding-top:22px">
+      <button class="pill-btn" onclick="go(3)">Next → Onboarding quiz</button>
+    </div>
+
+    <div class="tabbar">
+      <div class="tab on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>Home</div>
+      <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg>Orders</div>
+      <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6.1L12 16.8 6.7 19.7l1.1-6.1L3.4 9.4l6-.8z"/></svg>Prime</div>
+      <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.2" r="3.8"/><path d="M4.6 20.5a7.6 7.6 0 0114.8 0"/></svg>Account</div>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 3 ============ -->
+  <section class="screen" id="screen3">
+    <div class="qhead">
+      <div class="back" onclick="prevQ()">←</div>
+      <div class="progress"><i id="progressBar" style="width:20%"></i></div>
+      <div class="qstep" id="qstep">1 / 5</div>
+    </div>
+    <div class="dots" id="dots"></div>
+
+    <div class="qwrap">
+      <div class="q active" data-q="1">
+        <div class="eyebrow">Glovo Lunchbox</div>
+        <h2>What's your goal?</h2>
+        <p class="sub">We'll match kitchens and portion sizes that fit it.</p>
+        <div class="opts">
+          <div class="opt" data-k="goal" data-v="Lose weight"><div class="ico">📉</div><div class="txt"><div class="t1">Lose weight</div><div class="t2">Calorie-controlled, filling meals</div></div><div class="check">✓</div></div>
+          <div class="opt" data-k="goal" data-v="Maintain"><div class="ico">⚖️</div><div class="txt"><div class="t1">Maintain</div><div class="t2">Balanced, no counting</div></div><div class="check">✓</div></div>
+          <div class="opt" data-k="goal" data-v="Gain muscle"><div class="ico">💪</div><div class="txt"><div class="t1">Gain muscle</div><div class="t2">35 g+ protein per lunch</div></div><div class="check">✓</div></div>
+          <div class="opt" data-k="goal" data-v="Eat healthier"><div class="ico">🌱</div><div class="txt"><div class="t1">Eat healthier</div><div class="t2">More veg, less fried food</div></div><div class="check">✓</div></div>
+        </div>
+      </div>
+
+      <div class="q" data-q="2">
+        <div class="eyebrow">Step 2 of 5</div>
+        <h2>How many lunches per week?</h2>
+        <p class="sub">You can change the number of days or pause any week.</p>
+        <div class="opts">
+          <div class="opt" data-k="days" data-v="3"><div class="ico">3️⃣</div><div class="txt"><div class="t1">3 days a week</div><div class="t2">For hybrid office weeks</div></div><div class="check">✓</div></div>
+          <div class="opt" data-k="days" data-v="5"><div class="ico">5️⃣</div><div class="txt"><div class="t1">5 days a week</div><div class="t2">Mon–Fri · most popular</div></div><div class="check">✓</div></div>
+          <div class="opt" data-k="days" data-v="7"><div class="ico">7️⃣</div><div class="txt"><div class="t1">7 days a week</div><div class="t2">Weekends included</div></div><div class="check">✓</div></div>
+        </div>
+      </div>
+
+      <div class="q" data-q="3">
+        <div class="eyebrow">Step 3 of 5</div>
+        <h2>Any dietary preference?</h2>
+        <p class="sub">Every plan is reviewed by a dietitian.</p>
+        <div class="opts">
+          <div class="opt" data-k="diet" data-v="No restrictions"><div class="ico">🍽</div><div class="txt"><div class="t1">No restrictions</div></div><div class="check">✓</div></div>
+          <div class="opt" data-k="diet" data-v="Vegetarian"><div class="ico">🥕</div><div class="txt"><div class="t1">Vegetarian</div></div><div class="check">✓</div></div>
+          <div class="opt" data-k="diet" data-v="Vegan"><div class="ico">🌿</div><div class="txt"><div class="t1">Vegan</div></div><div class="check">✓</div></div>
+          <div class="opt" data-k="diet" data-v="Gluten-free"><div class="ico">🌾</div><div class="txt"><div class="t1">Gluten-free</div></div><div class="check">✓</div></div>
+          <div class="opt" data-k="diet" data-v="Low-carb"><div class="ico">🥑</div><div class="txt"><div class="t1">Low-carb / keto</div></div><div class="check">✓</div></div>
+        </div>
+      </div>
+
+      <div class="q" data-q="4">
+        <div class="eyebrow">Step 4 of 5</div>
+        <h2>Pick your portion size</h2>
+        <p class="sub">You can change the size for any individual dish.</p>
+        <div class="opts">
+          <div class="opt" data-k="portion" data-v="Light"><div class="ico">🥗</div><div class="txt"><div class="t1">Light</div><div class="t2">~400 kcal</div></div><div class="check">✓</div></div>
+          <div class="opt" data-k="portion" data-v="Balanced"><div class="ico">🍱</div><div class="txt"><div class="t1">Balanced</div><div class="t2">~600 kcal · most chosen</div></div><div class="check">✓</div></div>
+          <div class="opt" data-k="portion" data-v="Hearty"><div class="ico">🍛</div><div class="txt"><div class="t1">Hearty</div><div class="t2">800+ kcal</div></div><div class="check">✓</div></div>
+        </div>
+      </div>
+
+      <div class="q" data-q="5">
+        <div class="eyebrow">Step 5 of 5</div>
+        <h2>Anything to exclude?</h2>
+        <p class="sub">Select anything that doesn't work — those dishes will never reach your week.</p>
+        <div class="chips">
+          <div class="chip" data-multi="nuts">🥜 Nuts</div>
+          <div class="chip" data-multi="dairy">🥛 Dairy</div>
+          <div class="chip" data-multi="shellfish">🦐 Shellfish</div>
+          <div class="chip" data-multi="eggs">🥚 Eggs</div>
+          <div class="chip" data-multi="soy">🫘 Soy</div>
+          <div class="chip" data-multi="pork">🥓 Pork</div>
+          <div class="chip" data-multi="spicy">🌶 Very spicy</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qfoot">
+      <button class="pill-btn" id="qContinue" onclick="nextQ()">Continue</button>
+      <div class="skip" onclick="go(4)">Skip for now</div>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 3 ============ -->
+  <section class="screen" id="screen4">
+    <div class="s3head">
+      <div class="row">
+        <div class="back" onclick="go(3)">←</div>
+        <span class="badge yellow">🛵 ₴0 delivery</span>
+      </div>
+      <h2>Build your week</h2>
+      <p id="matchLine">Add a dish for every day — then move or swap dishes between days whenever you change your mind.</p>
+    </div>
+
+    <div class="weekbar">
+      <div class="wtop">
+        <div class="wcount" id="wCount">0 of 5 lunches <span>· 0 kitchens</span></div>
+        <button class="autofill" onclick="autoFill()">✨ Surprise me</button>
+      </div>
+      <div class="days" id="daysRow"></div>
+      <div class="movehint" id="moveHint">
+        <div>✋</div>
+        <div id="moveHintTxt">Moving <b>a dish</b> — tap another day to swap it there.</div>
+        <div class="x" onclick="cancelMove()">Cancel</div>
+      </div>
+    </div>
+
+    <div class="winbox">
+      <div class="t">🕛 Delivery window</div>
+      <div class="slots" id="slots"></div>
+    </div>
+
+    <div class="variety-note">
+      <div class="ic">🍽</div>
+      <div class="tx">This is what Glovo does best: <b>mix as many restaurants as you like</b> in one plan. Delivery is included, however many kitchens you pick.</div>
+    </div>
+
+    <div class="filters" id="filters"></div>
+
+    <div class="listhead">
+      <div class="t">Matched for you</div>
+      <div class="c" id="listCount">12 meals</div>
+    </div>
+
+    <div id="mealList"></div>
+    <div style="height:24px"></div>
+
+</section>
+
+  <!-- ============ SCREEN 4 ============ -->
+  <section class="screen" id="screen5">
+    <div class="qhead" style="padding-bottom:14px">
+      <div class="back" onclick="go(4)">←</div>
+      <div style="flex:1"><div style="font-size:16px;font-weight:800;letter-spacing:-.02em">Your Lunchbox plan</div></div>
+    </div>
+
+    <div class="recap">
+      <div class="rhead">
+        <div class="t">Your week</div>
+        <div class="badge green" id="varietyBadge">5 kitchens</div>
+      </div>
+      <div id="weekRecap"></div>
+      <div class="rfoot" id="recapChips"></div>
+    </div>
+
+    <div class="promo-strip">
+      <div class="big">−35%</div>
+      <div class="tx"><b>Your first week is 35% off</b> — applied automatically at checkout. Cancel before week 2 and pay nothing more.</div>
+    </div>
+
+    <div class="eyebrow-s">Most popular budgets:</div>
+
+    <div class="tier" data-price="280" data-nm="Start" onclick="selectTier(this)">
+      <div class="nm">Start</div>
+      <div class="price"><div class="a">182</div><div class="u">₴/day</div><div class="old">280 ₴</div></div>
+      <div class="firstwk">−35% first week · then 280 ₴/day</div>
+      <div class="desc">Main dish of your choice + soup, dessert or sandwich (1 add-on of your choice)</div>
+      <div class="list">
+        <div><span class="ok">✓</span> Delivery 12:00–15:00 included</div>
+        <div><span class="ok">✓</span> Dishes from different restaurants</div>
+      </div>
+    </div>
+
+    <div class="tier sel" data-price="350" data-nm="Standard" onclick="selectTier(this)">
+      <div class="pop">Most popular</div>
+      <div class="nm">Standard</div>
+      <div class="price"><div class="a">228</div><div class="u">₴/day</div><div class="old">350 ₴</div></div>
+      <div class="firstwk">−35% first week · then 350 ₴/day</div>
+      <div class="desc">Main dish + 2 add-ons of your choice: soup, sandwich, dessert or salad</div>
+      <div class="list">
+        <div><span class="ok">✓</span> Delivery 12:00–15:00 included</div>
+        <div><span class="ok">✓</span> Priority delivery window</div>
+        <div><span class="ok">✓</span> Swap a dish until 22:00 the night before</div>
+      </div>
+    </div>
+
+    <div class="tier" data-price="450" data-nm="Premium" onclick="selectTier(this)">
+      <div class="nm">Premium</div>
+      <div class="price"><div class="a">293</div><div class="u">₴/day</div><div class="old">450 ₴</div></div>
+      <div class="firstwk">−35% first week · then 450 ₴/day</div>
+      <div class="desc">Main dish + 3 add-ons of your choice: soup, sandwich, dessert or salad</div>
+      <div class="list">
+        <div><span class="ok">✓</span> Delivery 12:00–15:00 included</div>
+        <div><span class="ok">✓</span> Premium restaurants and chef dishes</div>
+        <div><span class="ok">✓</span> Personal dietitian consultation</div>
+      </div>
+    </div>
+
+    <div class="pad" style="padding-top:6px;padding-bottom:8px"><div class="sec-title" style="font-size:14px">Days per week</div></div>
+    <div class="daysel" id="daysel">
+      <div data-d="3">3 days</div>
+      <div data-d="5" class="on">5 days</div>
+      <div data-d="7">7 days</div>
+    </div>
+
+    <div class="calc">
+      <div class="r"><span id="calcTier">Standard · 350 ₴/day</span><b id="calcDays">× 5 days</b></div>
+      <div class="r free"><span>Delivery 12:00–15:00</span><b>included in the plan</b></div>
+      <div class="r promo"><span>First week (−35%)</span><b id="calcFirst">1,138 ₴</b></div>
+      <div class="r"><span>Per month (≈4.3 weeks)</span><b id="calcMonth">7,525 ₴</b></div>
+      <div class="r total"><span>Then per week</span><b id="calcWeek">1,750 ₴</b></div>
+    </div>
+
+    <div class="compare">
+      <div class="ic">💸</div>
+      <div class="tx">A single lunch order with delivery and service fees costs <b>420–550 ₴</b>. With Lunchbox you pay <b id="cmpPer">350 ₴</b> a day and save about <b id="cmpSave">650 ₴</b> a week — and 35% more on your first week.</div>
+    </div>
+
+    <div class="pad">
+      <button class="pill-btn" id="mainCta">Start My Plan</button>
+      <div class="smallprint">Swap any meal until 22:00 the night before. Pause, skip a week or cancel anytime — no fees. First week is 35% off and fully refundable.</div>
+      <div class="trust">
+        <div>🔁 Swap dishes</div>
+        <div>⏸ Pause anytime</div>
+        <div>✕ Cancel with no fees</div>
+      </div>
+    </div>
+    <div style="height:16px"></div>
+  </section>
+</div>
+
+<div class="caption">
+  Prototype · tap <code>1–4</code> above to switch screens. On screen 3: tap an empty day then <code>Add</code> a dish, tap a filled day to pick it up and tap another day to swap (drag works too), or hit <code>Surprise me</code>.
+</div>
+
+<script>
+/* ================= routing ================= */
+function go(n){
+  n=Number(n);
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen'+n).classList.add('active');
+  document.querySelectorAll('.navstrip button').forEach(b=>b.classList.toggle('active', b.dataset.go==String(n)));
+  document.getElementById('screen'+n).scrollTop=0;
+  document.getElementById('weekCta').hidden = (n!==4);
+  if(n===4) buildWeekUI();
+  if(n===5) renderRecap();
+}
+document.querySelectorAll('.navstrip button').forEach(b=>b.onclick=()=>go(b.dataset.go));
+
+/* ================= quiz ================= */
+const answers={goal:'Eat healthier',days:'5',diet:'No restrictions',portion:'Balanced',excludes:[]};
+let step=1; const TOTAL=5;
+const dotsEl=document.getElementById('dots');
+for(let i=0;i<TOTAL;i++){ const d=document.createElement('i'); if(i===0)d.classList.add('on'); dotsEl.appendChild(d); }
+function renderStep(){
+  document.querySelectorAll('.q').forEach(q=>q.classList.toggle('active', q.dataset.q==String(step)));
+  document.getElementById('progressBar').style.width=(step/TOTAL*100)+'%';
+  document.getElementById('qstep').textContent=step+' / '+TOTAL;
+  dotsEl.querySelectorAll('i').forEach((d,i)=>d.classList.toggle('on', i===step-1));
+  document.getElementById('qContinue').textContent = step===TOTAL ? 'Build my week' : 'Continue';
+  document.getElementById('screen3').scrollTop=0;
+}
+function nextQ(){ if(step<TOTAL){step++;renderStep();} else go(4); }
+function prevQ(){ if(step>1){step--;renderStep();} else go(1); }
+document.querySelectorAll('.opt').forEach(o=>{
+  o.onclick=()=>{
+    document.querySelectorAll('.opt[data-k="'+o.dataset.k+'"]').forEach(x=>x.classList.remove('sel'));
+    o.classList.add('sel'); answers[o.dataset.k]=o.dataset.v;
+    if(o.dataset.k==='days'){ resetWeek(); autoFill(); syncDaySel(); }
+    setTimeout(nextQ,220);
+  };
+});
+document.querySelectorAll('.chip').forEach(c=>{
+  c.onclick=()=>{ c.classList.toggle('sel');
+    answers.excludes=[...document.querySelectorAll('.chip.sel')].map(x=>x.dataset.multi); };
+});
+['goal','days','diet','portion'].forEach(k=>{
+  const el=document.querySelector('.opt[data-k="'+k+'"][data-v="'+answers[k]+'"]'); if(el) el.classList.add('sel');
+});
+renderStep();
+
+/* ================= catalogue ================= */
+const MEALS=[
+ {id:1, r:'Verde Bowl',   m:'Chicken quinoa power bowl',  e:'🥙', g:'linear-gradient(140deg,#D9F2E4,#A9E3C6)', kcal:560,pro:38,tags:['High-protein','Gluten-free'],cat:'Bowls',        rate:4.8,time:'15–25',dist:'0.8 km',flag:'Top match'},
+ {id:2, r:'Protein Lab',  m:'Grilled chicken & rice plate',e:'🍗', g:'linear-gradient(140deg,#FFE1B8,#FFC48C)', kcal:640,pro:45,tags:['High-protein','Low sugar'],  cat:'High-protein', rate:4.7,time:'20–30',dist:'1.4 km',flag:'45 g protein'},
+ {id:3, r:'Casa Verduras',m:'Mediterranean veggie plate', e:'🥗', g:'linear-gradient(140deg,#E6F0D9,#C4DFA1)', kcal:480,pro:24,tags:['Vegan','High-fibre'],       cat:'Mediterranean',rate:4.9,time:'15–25',dist:'0.6 km',flag:'Vegan'},
+ {id:4, r:'Sakura Bento', m:'Salmon teriyaki bento',      e:'🍱', g:'linear-gradient(140deg,#FFDDE4,#FFB8C8)', kcal:590,pro:32,tags:['Omega-3','Balanced'],       cat:'Asian',        rate:4.6,time:'25–35',dist:'2.1 km',flag:'New'},
+ {id:5, r:'Wok & Roll',   m:'Chicken ramen, light broth', e:'🍜', g:'linear-gradient(140deg,#FFE9C9,#FFD08A)', kcal:610,pro:34,tags:['Comfort food'],             cat:'Asian',        rate:4.7,time:'20–30',dist:'1.1 km',flag:''},
+ {id:6, r:'Poké Hub',     m:'Tuna & avocado poké',        e:'🍥', g:'linear-gradient(140deg,#D8ECFF,#A9D3F5)', kcal:520,pro:36,tags:['High-protein','Omega-3'],   cat:'Bowls',        rate:4.8,time:'15–25',dist:'1.7 km',flag:''},
+ {id:7, r:'Falafel Bar',  m:'Falafel & hummus wrap',      e:'🌯', g:'linear-gradient(140deg,#F3E7D3,#E0C89C)', kcal:540,pro:22,tags:['Vegetarian'],               cat:'Mediterranean',rate:4.5,time:'15–25',dist:'0.9 km',flag:''},
+ {id:8, r:'Terra Vegana', m:'Lentil dahl with brown rice',e:'🍛', g:'linear-gradient(140deg,#E9E2FA,#C9BAF0)', kcal:500,pro:26,tags:['Vegan','Iron-rich'],        cat:'Comfort food', rate:4.7,time:'20–30',dist:'1.3 km',flag:''},
+ {id:9, r:'Grill Street', m:'Steak with sweet potato',    e:'🥩', g:'linear-gradient(140deg,#FFD9CF,#F5AE97)', kcal:720,pro:48,tags:['High-protein','Hearty'],    cat:'High-protein', rate:4.6,time:'25–35',dist:'2.4 km',flag:'Hearty'},
+ {id:10,r:'Mama Napoli',  m:'Wholewheat pasta primavera', e:'🍝', g:'linear-gradient(140deg,#FFE0DC,#FFB9AE)', kcal:600,pro:21,tags:['Vegetarian'],               cat:'Comfort food', rate:4.5,time:'25–35',dist:'1.9 km',flag:''},
+ {id:11,r:'Soup Co.',     m:'Roasted pumpkin soup & bread',e:'🍲',g:'linear-gradient(140deg,#FFEFC8,#FFD98F)', kcal:410,pro:16,tags:['Light','Vegetarian'],       cat:'Comfort food', rate:4.4,time:'15–25',dist:'0.7 km',flag:'Light'},
+ {id:12,r:'Taco Libre',   m:'Grilled chicken burrito bowl',e:'🌮',g:'linear-gradient(140deg,#FFE7B8,#F7C069)', kcal:650,pro:40,tags:['High-protein','Spicy'],     cat:'Mediterranean',rate:4.6,time:'20–30',dist:'1.5 km',flag:''}
+];
+const FILTERS=['All','Bowls','High-protein','Asian','Mediterranean','Comfort food'];
+let activeFilter='All';
+
+/* ================= week builder ================= */
+const DAY_SETS={'3':['Mon','Wed','Fri'],'5':['Mon','Tue','Wed','Thu','Fri'],'7':['Mon','Tue','Wed','Thu','Fri','Sat','Sun']};
+const SLOTS=['12:00–13:00','13:00–14:00','14:00–15:00'];
+let slot=SLOTS[0];
+let week=[], activeDay=0, moveFrom=null;
+
+function resetWeek(){ week=DAY_SETS[answers.days].map(d=>({day:d,meal:null})); activeDay=0; moveFrom=null; }
+resetWeek();
+
+function buildWeekUI(){
+  document.getElementById('matchLine').textContent =
+    'Goal: '+answers.goal.toLowerCase()+' · '+answers.portion.toLowerCase()+' portions · '+answers.diet.toLowerCase()+
+    '. Tap a dish to move or swap it between days.';
+  renderFilters(); renderSlots(); renderDays(); renderMeals();
+}
+function renderFilters(){
+  document.getElementById('filters').innerHTML=FILTERS.map(f=>
+    '<div class="fchip'+(f===activeFilter?' on':'')+'" onclick="setFilter(\''+f+'\')">'+f+'</div>').join('');
+}
+function setFilter(f){ activeFilter=f; renderFilters(); renderMeals(); }
+function renderSlots(){
+  document.getElementById('slots').innerHTML=SLOTS.map(s=>
+    '<div class="slotb'+(s===slot?' on':'')+'" onclick="setSlot(\''+s+'\')">'+s+'</div>').join('');
+}
+function setSlot(s){ slot=s; renderSlots(); }
+
+function renderDays(){
+  document.getElementById('daysRow').innerHTML=week.map((w,i)=>{
+    const m=w.meal;
+    const cls='day'+(i===activeDay&&moveFrom===null?' active':'')+(m?' filled':'')+
+      (i===moveFrom?' moving':'')+(moveFrom!==null&&i!==moveFrom?' drop-target':'');
+    return '<div class="'+cls+'" onclick="setDay('+i+')"'+
+      (m?' draggable="true" ondragstart="dragStart(event,'+i+')"':'')+
+      ' ondragover="event.preventDefault()" ondrop="dropOn(event,'+i+')" ondragend="dragEnd()">'+
+      '<div class="lbl">'+w.day+'</div>'+
+      '<div class="slot" style="'+(m?'background:'+m.g+';':'')+'">'+(m?m.e:'+')+
+        (m?'<div class="clear" onclick="event.stopPropagation();clearDay('+i+')">✕</div><div class="grip">⋯</div>':'')+'</div>'+
+      '<div class="rest">'+(m?m.r:'')+'</div></div>';
+  }).join('');
+
+  const hint=document.getElementById('moveHint');
+  if(moveFrom!==null&&week[moveFrom].meal){
+    hint.classList.add('on');
+    document.getElementById('moveHintTxt').innerHTML='Moving <b>'+week[moveFrom].meal.r+'</b> — tap another day to swap it there.';
+  } else hint.classList.remove('on');
+
+  const filled=week.filter(w=>w.meal).length;
+  const kitchens=new Set(week.filter(w=>w.meal).map(w=>w.meal.r)).size;
+  document.getElementById('wCount').innerHTML=filled+' of '+week.length+' lunches <span>· '+kitchens+' kitchen'+(kitchens===1?'':'s')+'</span>';
+  document.getElementById('s3cta').textContent = filled===week.length ? 'Continue to plans' : 'Continue to plans ('+filled+'/'+week.length+')';
+}
+function setDay(i){
+  if(moveFrom===null){ if(week[i].meal) moveFrom=i; else activeDay=i; }
+  else if(moveFrom===i){ moveFrom=null; }
+  else { swapDays(moveFrom,i); activeDay=i; moveFrom=null; }
+  renderDays(); renderMeals();
+}
+function swapDays(a,b){ const t=week[a].meal; week[a].meal=week[b].meal; week[b].meal=t; }
+function cancelMove(){ moveFrom=null; renderDays(); renderMeals(); }
+function clearDay(i){ week[i].meal=null; activeDay=i; moveFrom=null; renderDays(); renderMeals(); }
+function dragStart(e,i){ moveFrom=i; e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',i); renderDays(); }
+function dropOn(e,i){ e.preventDefault();
+  const from = moveFrom!==null?moveFrom:+e.dataTransfer.getData('text/plain');
+  if(!isNaN(from)&&from!==i) swapDays(from,i);
+  activeDay=i; moveFrom=null; renderDays(); renderMeals(); }
+function dragEnd(){ if(moveFrom!==null){ moveFrom=null; renderDays(); } }
+
+function renderMeals(){
+  const list=MEALS.filter(m=>activeFilter==='All'||m.cat===activeFilter);
+  document.getElementById('listCount').textContent=list.length+' meals';
+  document.getElementById('mealList').innerHTML=list.map(m=>{
+    const days=week.filter(w=>w.meal&&w.meal.id===m.id).map(w=>w.day);
+    const picked=days.length>0;
+    return '<div class="mcard'+(picked?' picked':'')+'">'+
+      '<div class="photo" style="background:'+m.g+'">'+m.e+
+        (m.flag?'<div class="float"><span class="badge '+(m.flag==='Vegan'?'green':'yellow')+'">'+m.flag+'</span></div>':'')+
+        '<div class="rating">★ '+m.rate+'</div></div>'+
+      '<div class="body">'+
+        '<div class="top"><div><h3>'+m.r+'</h3><div class="meal">'+m.m+'</div></div>'+
+          '<button class="addbtn" onclick="addMeal('+m.id+')">'+(picked?'✓ Added':'+ Add')+'</button></div>'+
+        '<div class="macros"><span class="badge grey">'+m.kcal+' kcal</span><span class="badge green">'+m.pro+' g protein</span>'+
+          m.tags.map(t=>'<span class="badge grey">'+t+'</span>').join('')+'</div>'+
+        '<div class="foot">'+m.time+' min <span class="dot"></span> '+m.dist+' <span class="dot"></span> '+m.cat+'</div>'+
+        (picked?'<div class="assigned">In plan: '+days.join(', ')+'</div>':'')+
+      '</div></div>';
+  }).join('');
+}
+function addMeal(id){
+  const m=MEALS.find(x=>x.id===id);
+  moveFrom=null; week[activeDay].meal=m;
+  const next=week.findIndex((w,i)=>i>activeDay&&!w.meal);
+  const anyEmpty=week.findIndex(w=>!w.meal);
+  activeDay = next>-1?next:(anyEmpty>-1?anyEmpty:activeDay);
+  renderDays(); renderMeals();
+}
+function autoFill(){
+  const used=new Set(week.filter(w=>w.meal).map(w=>w.meal.r));
+  const pool=MEALS.filter(m=>!used.has(m.r)).sort(()=>Math.random()-0.5);
+  week.forEach(w=>{ if(!w.meal&&pool.length){ const m=pool.shift(); used.add(m.r); w.meal=m; } });
+  moveFrom=null;
+  const e=week.findIndex(w=>!w.meal); activeDay=e>-1?e:0;
+  renderDays(); renderMeals();
+}
+autoFill();
+
+/* ================= pricing ================= */
+function fmt(n){ return n.toLocaleString('en-US'); }
+function syncDaySel(){ document.querySelectorAll('#daysel div').forEach(d=>d.classList.toggle('on', d.dataset.d===answers.days)); }
+document.querySelectorAll('#daysel div').forEach(d=>{
+  d.onclick=()=>{ answers.days=d.dataset.d; resetWeek(); autoFill(); syncDaySel();
+    document.querySelectorAll('.opt[data-k="days"]').forEach(x=>x.classList.toggle('sel', x.dataset.v===answers.days));
+    renderRecap(); };
+});
+function selectTier(t){ document.querySelectorAll('.tier').forEach(x=>x.classList.remove('sel')); t.classList.add('sel'); updateCalc(); }
+function updateCalc(){
+  const t=document.querySelector('.tier.sel'); if(!t) return;
+  const price=+t.dataset.price, days=+answers.days, wk=price*days, mo=Math.round(wk*4.3);
+  document.getElementById('calcTier').textContent=t.dataset.nm+' · '+price+' ₴/day';
+  document.getElementById('calcDays').textContent='× '+days+' days';
+  document.getElementById('calcWeek').textContent=fmt(wk)+' ₴';
+  document.getElementById('calcFirst').textContent=fmt(Math.round(wk*0.65))+' ₴';
+  document.getElementById('calcMonth').textContent=fmt(mo)+' ₴';
+  document.getElementById('cmpPer').textContent=price+' ₴';
+  document.getElementById('cmpSave').textContent=fmt(Math.round((480-price)*days))+' ₴';
+}
+function renderRecap(){
+  const filled=week.filter(w=>w.meal);
+  document.getElementById('weekRecap').innerHTML=filled.map(w=>{
+    const m=w.meal;
+    return '<div class="wk-row"><div class="d">'+w.day.toUpperCase()+'</div>'+
+      '<div class="ph" style="background:'+m.g+'">'+m.e+'</div>'+
+      '<div style="min-width:0"><div class="nm">'+m.r+'</div><div class="ml">'+m.m+'</div></div>'+
+      '<div class="kc">'+m.kcal+' kcal</div></div>';
+  }).join('')||'<div class="wk-row" style="color:#9A9AA0;font-size:12.5px">Your week is not built yet.</div>';
+  const kitchens=new Set(filled.map(w=>w.meal.r)).size;
+  document.getElementById('varietyBadge').textContent=kitchens+' kitchen'+(kitchens===1?'':'s');
+  const kcal={'Light':'~400 kcal','Balanced':'~600 kcal','Hearty':'800+ kcal'}[answers.portion];
+  document.getElementById('recapChips').innerHTML=
+    [filled.length+' lunches / week', answers.portion+' · '+kcal, answers.diet, 'Delivery '+slot]
+    .map(c=>'<span class="badge grey">'+c+'</span>').join('');
+  syncDaySel(); updateCalc();
+}
+renderRecap();
+</script>
+</body>
+</html>
